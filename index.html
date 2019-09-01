@@ -181,7 +181,7 @@
       <h5 class="mb-0" slot="header">Ready Queue</h5>
       <b-list-group flush class="text-primary">
         <template v-if="readyQueueProcesses.length > 0">
-          <b-list-group-item v-for="{ processName, subProcesses } in sortedReadyQueueProcess">
+          <b-list-group-item v-for="{ processName, subProcesses } in readyQueueProcesses">
             <strong class="process-label">{{ processName }}</strong>
             <template v-for="{ cpu, io } in subProcesses">
               <div class="pointer" :class="{ second: getFinishedCount(subProcesses) }">

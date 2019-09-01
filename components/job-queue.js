@@ -9,8 +9,11 @@ const JobQueue = {
     programCounter (newVal) {
       if (newVal === this.counter) {
         this.ADD_PROCESS_FROM_JOB_QUEUE();
-      } else if (this.isReadyQueueEmpty) {
-        this.counter = newVal + 1;
+      }
+    },
+    finishedProcesses (newVal) {
+      if (newVal.length > 0 && this.isReadyQueueEmpty) {
+        this.counter = this.programCounter + 1;
       }
     }
   }

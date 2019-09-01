@@ -121,13 +121,10 @@ const store = new Vuex.Store({
       state.readyQueueProcessesLoaded++;
     },
     ADD_PROCESS_FROM_JOB_QUEUE (state, value) {
-      if (state.jobQueueProcesses.length > 0) {
-        // console.log('count', state.jobQueueCount);
-        // while (state.readyQueueProcesses.length < state.readyQueueCount) {
-          let process = state.jobQueueProcesses.shift();
+      while (state.jobQueueProcesses.length > 0 && state.readyQueueProcesses.length < state.readyQueueCount) {
+        let process = state.jobQueueProcesses.shift();
 
-          state.readyQueueProcesses.push(process);
-        // }
+        state.readyQueueProcesses.push(process);
       }
     },
     ADD_FINISHED_PROCESS (state, value) {
@@ -136,8 +133,5 @@ const store = new Vuex.Store({
       state.ioProcesses[secondSubProcess.io.index - 1].process = null;
       state.finishedProcesses.push(value);
     }
-  },
-  actions: {
-
   }
 });
