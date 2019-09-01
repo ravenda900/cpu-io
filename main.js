@@ -1,3 +1,12 @@
+VeeValidate.localize({
+  en: {
+    messages: {
+      required () {
+        return 'This field is required'
+      }
+    }
+  }
+});
 VeeValidate.setInteractionMode('eager');
 
 new Vue({

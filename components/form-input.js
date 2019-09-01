@@ -14,11 +14,6 @@ const FormInput = {
       show: true
     }
   },
-  watch: {
-    isSaved (newVal) {
-      console.log('newVal', newVal);
-    }
-  },
   methods: {
     async onSubmit (e) {
       e.preventDefault();
