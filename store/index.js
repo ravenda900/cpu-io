@@ -16,6 +16,9 @@ const store = new Vuex.Store({
   getters: {
     isReadyQueueEmpty (state) {
       return state.readyQueueCount === state.readyQueueProcessesLoaded;
+    },
+    isProcessingFinished (state) {
+      return state.jobQueueCount + state.readyQueueCount === state.finishedProcesses.length;
     }
   },
   mutations: {

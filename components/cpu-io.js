@@ -39,9 +39,14 @@ const CPU_IO = {
     }
   },
   watch: {
-    finishedProcesses (newVal) {
-      if (this.jobQueueCount + this.readyQueueCount === newVal.length) {
-        clearInterval(this.interval);
+    isProcessingFinished (newVal) {
+      if (newVal) {
+        this.pause();
+      }
+    },
+    isManual (newVal) {
+      if (newVal && this.isPlaying) {
+        this.pause();
       }
     }
   },

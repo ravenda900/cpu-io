@@ -13,7 +13,8 @@ Vue.mixin({
       'isSaved'
     ]),
     ...Vuex.mapGetters([
-      'isReadyQueueEmpty'
+      'isReadyQueueEmpty',
+      'isProcessingFinished'
     ])
   },
   methods: {
