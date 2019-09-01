@@ -1,0 +1,51 @@
+.pointer {
+  width: 60px;
+  height: 32px;
+  position: relative;
+  background: #ffcc33;
+  line-height: 32px;
+  color: #fff;
+  float: left;
+  font-size: 14px;
+}
+.pointer:first-of-type {
+  padding-left: 15px;
+  margin-left: 10px;
+}
+.pointer:not(:first-of-type) {
+  margin-left: 5px;
+  padding-left: 22px;
+}
+.pointer.second {
+  background-color: #0000cc;
+}
+.pointer:not(:first-of-type)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-left: 16px solid white;
+  border-top: 16px solid transparent;
+  border-bottom: 16px solid transparent;
+}
+.pointer::before {
+  content: "";
+  position: absolute;
+  right: -16px;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-left: 16px solid #ffcc33;
+  border-top: 16px solid transparent;
+  border-bottom: 16px solid transparent;
+  z-index: 1;
+}
+.pointer.second::before {
+  border-left-color: #0000cc;
+}
+.process-label {
+  float: left;
+  line-height: 32px;
+}

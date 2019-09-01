@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>CPU IO</title>
+
+  <!-- Load required Bootstrap and BootstrapVue CSS -->
+  <link type="text/css" rel="stylesheet" href="libs/bootstrap/bootstrap.min.css" />
+  <link type="text/css" rel="stylesheet" href="libs/bootstrap-vue/bootstrap-vue.min.css" />
+  <link type="text/css" rel="stylesheet" href="libs/font-awesome/css/font-awesome.min.css">
+  <link type="text/css" rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <div id="app">
+    <cpu-io v-if="isSaved"></cpu-io>
+    <form-input v-else></form-input>
+  </div>
+
+  <!-- Load Vue followed by BootstrapVue -->
+  <script src="libs/vue/vue.min.js"></script>
+  <script src="libs/vuex/vuex.min.js"></script>
+  <script src="libs/bootstrap-vue/bootstrap-vue.min.js"></script>
+  <script src="libs/vee-validate/vee-validate.full.min.js"></script>
+  <script src="utils/index.js"></script>
+  <script src="store/index.js"></script>
+  <script src="mixins/index.js"></script>
+  <script type="text/x-template" id="form-template">
+    <div class="container">
+      <div class="row">
+        <div class="col-6 offset-3">
+          <b-card title="CPU I/O" class="my-3">
+            <validation-observer
+              ref="observer"
+              v-slot="{ invalid }"
+              slim>
+              <b-form @submit="onSubmit" @reset="onReset" v-if="show" novalidate class="mb-3">
+                <b-form-group
+                  label="Enter number of process in job queue"
+                  label-for="jobQueueCount">
+                  <validation-provider rules="required|numeric" v-slot="{ errors }">
+                    <b-form-input
+                      id="jobQueueCount"
+                      v-model="form.jobQueueCount"
+                      type="number"
+                      :state="errors.length > 0 ? false : null"
+                    ></b-form-input>
+                    <b-form-invalid-feedback>
+                      {{ errors[0] }}
+                    </b-form-invalid-feedback>
+                  </validation-provider>
+                </b-form-group>
+
+                <b-form-group
+                  label="Enter number of process in ready queue"
+                  label-for="readyQueueCount">
+                  <validation-provider rules="required|numeric" v-slot="{ errors }">
+                    <b-form-input
+                      id="readyQueueCount"
+                      v-model="form.readyQueueCount"
+                      type="number"
+                      :state="errors.length > 0 ? false : null"
+                    ></b-form-input>
+                    <b-form-invalid-feedback>
+                      {{ errors[0] }}
+                    </b-form-invalid-feedback>
+                  </validation-provider>
+                </b-form-group>
+
+                <b-form-group
+                  label="Enter number of IO's"
+                  label-for="ioCount">
+                  <validation-provider rules="required|numeric" v-slot="{ errors }">
+                    <b-form-input
+                      id="ioCount"
+                      v-model="form.ioCount"
+                      type="number"
+                      :state="errors.length > 0 ? false : null"
+                    ></b-form-input>
+                    <b-form-invalid-feedback>
+                      {{ errors[0] }}
+                    </b-form-invalid-feedback>
+                  </validation-provider>
+                </b-form-group>
+
+                <b-button type="submit" :disabled="invalid" variant="outline-primary">Save</b-button>
+                <b-button type="reset" variant="outline-danger">Reset</b-button>
+              </b-form>
+            </validation-observer>
+          </b-card>
+        </div>
+      </div>
+    </div>
+  </script>
+  <script type="text/x-template" id="cpu-io-template">
+    <div class="container">
+      <div class="row">
+        <div class="col">
+          <div class="float-right my-3">
+            <b-form-radio-group
+              size="sm"
+              id="playMethod"
+              v-model="playMethod"
+              :options="playMethodOptions"
+              buttons
+              name="playMethod"
+            ></b-form-radio-group>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <div class="float-right mb-3">
+            <template v-if="isPlaying">
+              <b-button
+                size="sm"
+                v-b-tooltip.hover title="Pause"
+                variant="outline-secondary"
+                @click.prevent="pause">
+                <i class="fa fa-pause" aria-hidden="true"></i>
+              </b-button>
+              <b-button
+                size="sm"
+                v-b-tooltip.hover title="Stop"
+                variant="outline-danger"
+                @click.prevent="stop">
+                <i class="fa fa-stop" aria-hidden="true"></i>
+              </b-button>
+            </template>
+            <b-button
+              size="sm"
+              v-b-tooltip.hover title="Play"
+              variant="outline-primary"
+              v-if="!isPlaying && isAutomatic"
+              @click.prevent="play">
+              <i class="fa fa-play" aria-hidden="true"></i>
+            </b-button>
+            <b-button
+              size="sm"
+              v-b-tooltip.hover title="Increment program counter"
+              variant="outline-primary"
+              v-if="isManual"
+              @click.prevent="INCREMENT_PROGRAM_COUNTER">
+              <i class="fa fa-forward" aria-hidden="true"></i>
+            </b-button>
+            <b-button
+              size="sm"
+              v-b-tooltip.hover title="Back"
+              variant="outline-primary"
+              @click.prevent="RESET_FORM_INPUTS">
+              <i class="fa fa-arrow-left" aria-hidden="true"></i>
+            </b-button>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <ready-queue></ready-queue>
+          <job-queue></job-queue>
+        </div>
+        <div class="col">
+          <cpu></cpu>
+          <template v-for="(ioProcess, index) in ioProcesses">
+            <io :io-process="ioProcess" :index="index"></io>
+          </template>
+        </div>
+        <div class="col">
+          <program-counter></program-counter>
+          <finished-process></finished-process>
+        </div>
+      </div>
+    </div>
+  </script>
+  <script type="text/x-template" id="ready-queue-template">
+    <b-card
+      bg-variant="primary"
+      text-variant="white"
+      no-body
+      class="mb-3">
+      <h5 class="mb-0" slot="header">Ready Queue</h5>
+      <b-list-group flush class="text-primary">
+        <template v-if="readyQueueProcesses.length > 0">
+          <b-list-group-item v-for="{ processName, subProcesses } in sortedReadyQueueProcess">
+            <strong class="process-label">{{ processName }}</strong>
+            <template v-for="{ cpu, io } in subProcesses">
+              <div class="pointer" :class="{ second: getFinishedCount(subProcesses) }">
+                <span>CPU {{ cpu }}</span>
+              </div>
+              <div class="pointer" :class="{ second: getFinishedCount(subProcesses) }">
+                <span>IO{{ `${io.index} ${io.counter}` }}</strong>
+              </div>
+            </template>
+          </b-list-group-item>
+        </template>
+        <template v-else>
+          <b-list-group-item
+            class="text-center">
+            <em class="text-center">N/A</em>
+          </b-list-group-item>
+        </template>
+      </b-list-group>
+    </b-card>
+  </script>
+  <script type="text/x-template" id="job-queue-template">
+    <b-card
+      bg-variant="info"
+      text-variant="white"
+      no-body
+      class="mb-3">
+      <h5 class="mb-0" slot="header">Job Queue</h5>
+      <b-list-group flush class="text-info">
+        <template v-if="jobQueueProcesses.length > 0">
+          <b-list-group-item v-for="{ processName, subProcesses } in jobQueueProcesses">
+            <strong class="process-label">{{ processName }}</strong>
+            <template v-for="{ cpu, io } in subProcesses">
+              <div class="pointer">
+                <span>CPU {{ cpu }}</span>
+              </div>
+              <div class="pointer">
+                <span>IO{{ `${io.index} ${io.counter}` }}</strong>
+              </div>
+            </template>
+          </b-list-group-item>
+        </template>
+        <template v-else>
+          <b-list-group-item
+            class="text-center">
+            <em class="text-center">N/A</em>
+          </b-list-group-item>
+        </template>
+      </b-list-group>
+    </b-card>
+  </script>
+  <script type="text/x-template" id="cpu-template">
+    <b-card
+      bg-variant="success"
+      text-variant="white"
+      no-body
+      class="mb-3">
+      <h5 class="mb-0" slot="header">CPU</h5>
+      <b-list-group flush class="text-success">
+        <b-list-group-item
+          v-if="cpuProcess === null"
+          class="text-center">
+          <em class="text-center">N/A</em>
+        </b-list-group-item>
+        <b-list-group-item v-else>
+          <strong class="process-label">{{ cpuProcess.processName }}</strong>
+          <template v-for="{ cpu, io } in cpuProcess.subProcesses">
+            <div class="pointer" :class="{ second: getFinishedCount(cpuProcess.subProcesses) }">
+              <span>CPU {{ cpu  }}</span>
+            </div>
+            <div class="pointer" :class="{ second: getFinishedCount(cpuProcess.subProcesses) }">
+              <span>IO{{ `${io.index} ${io.counter}` }}</strong>
+            </div>
+          </template>
+        </b-list-group-item>
+      </b-list-group>
+    </b-card>
+  </script>
+  <script type="text/x-template" id="io-template">
+    <b-card
+      bg-variant="danger"
+      text-variant="white"
+      no-body
+      class="mb-3">
+      <h5 class="mb-0" slot="header">{{ ioProcess.ioName }}</h5>
+      <b-list-group flush class="text-danger">
+        <b-list-group-item
+          v-if="ioProcess.process === null"
+          class="text-center">
+          <em class="text-center">N/A</em>
+        </b-list-group-item>
+        <b-list-group-item v-else>
+          <strong class="process-label">{{ ioProcess.process.processName }}</strong>
+          <template v-for="{ cpu, io } in ioProcess.process.subProcesses">
+            <div class="pointer" :class="{ second: getFinishedCount(ioProcess.process.subProcesses) }">
+              <span>CPU {{ cpu }}</span>
+            </div>
+            <div class="pointer" :class="{ second: getFinishedCount(ioProcess.process.subProcesses) }">
+              <span>IO{{ `${io.index} ${io.counter}` }}</strong>
+            </div>
+          </template>
+        </b-list-group-item>
+      </b-list-group>
+    </b-card>
+  </script>
+  <script type="text/x-template" id="program-counter-template">
+    <b-card
+      bg-variant="dark"
+      text-variant="white"
+      no-body
+      class="mb-3">
+      <h5 class="mb-0" slot="header">Program Counter</h5>
+      <b-list-group flush class="text-dark">
+        <b-list-group-item>
+          <h1 class="mb-0 text-center">{{ programCounter }}</h1>
+        </b-list-group-item>
+      </b-list-group>
+    </b-card>
+  </script>
+  <script type="text/x-template" id="finished-process-template">
+    <b-card
+      bg-variant="secondary"
+      text-variant="white"
+      no-body
+      class="mb-3">
+      <h5 class="mb-0" slot="header">Finished Processes</h5>
+      <b-list-group flush class="text-secondary">
+        <template v-if="finishedProcesses.length > 0">
+          <b-list-group-item
+            class="text-center"
+            v-for="{ processName } in finishedProcesses">
+            <strong>{{ processName }}</strong>
+          </b-list-group-item>
+        </template>
+        <template v-else>
+          <b-list-group-item class="text-center">
+            <em class="text-center">N/A</em>
+          </b-list-group-item>
+        </template>
+      </b-list-group>
+    </b-card>
+  </script>
+  <script src="components/form-input.js"></script>
+  <script src="components/ready-queue.js"></script>
+  <script src="components/job-queue.js"></script>
+  <script src="components/cpu.js"></script>
+  <script src="components/io.js"></script>
+  <script src="components/program-counter.js"></script>
+  <script src="components/finished-process.js"></script>
+  <script src="components/cpu-io.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
