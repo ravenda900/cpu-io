@@ -38,6 +38,13 @@ const CPU_IO = {
       return this.playState === 0;
     }
   },
+  watch: {
+    finishedProcesses (newVal) {
+      if (this.jobQueueCount + this.readyQueueCount === newVal.length) {
+        clearInterval(this.interval);
+      }
+    }
+  },
   methods: {
     play () {
       this.playState = 1;
