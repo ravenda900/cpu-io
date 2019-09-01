@@ -7,9 +7,9 @@ const FormInput = {
   data () {
     return {
       form: {
-        readyQueueCount: 2,
-        jobQueueCount: 2,
-        ioCount: 2
+        readyQueueCount: null,
+        jobQueueCount: null,
+        ioCount: null
       },
       show: true
     }
